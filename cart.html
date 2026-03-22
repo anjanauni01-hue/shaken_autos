@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart - Shaken Autos</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .cart-layout {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+        @media (max-width: 768px) {
+            .cart-layout { grid-template-columns: 1fr; }
+        }
+        .order-summary {
+            position: sticky;
+            top: 100px;
+            padding: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">🟠 Shaken<span>Autos</span></div>
+        <nav id="auth-nav">
+            <!-- Dynamically populated -->
+        </nav>
+    </header>
+
+    <main>
+        <h1 class="mb-4" style="margin-bottom: 2rem;">Your Cart</h1>
+        <div class="cart-layout">
+            <div id="cartItemsList" class="glass" style="display:flex; flex-direction:column;">
+                <!-- Dynamically populated -->
+            </div>
+            
+            <div class="order-summary glass">
+                <h3 style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem">Order Summary</h3>
+                <div class="flex justify-between mb-4" style="color:var(--text-muted)">
+                    <span>Subtotal</span>
+                    <span id="subTotal">LKR 0</span>
+                </div>
+                <div class="flex justify-between mb-4" style="color:var(--text-muted)">
+                    <span>Shipping</span>
+                    <span>LKR 500</span> <!-- Fixed mockup shipping -->
+                </div>
+                <div class="flex justify-between" style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem; font-size: 1.25rem; font-weight: 700;">
+                    <span>Total</span>
+                    <span id="grandTotal" style="color:var(--primary)">LKR 0</span>
+                </div>
+                
+                <button class="btn btn-primary" style="width: 100%; margin-top: 2rem;" id="checkoutBtn" onclick="processCheckout()">
+                    Secure Checkout  🔒
+                </button>
+                <div style="text-align:center; margin-top:1rem;">
+                    <a href="index.html" style="color:var(--text-muted); font-size:0.9rem; text-decoration:none;">← Continue Shopping</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="notification"></div>
+    <script src="data.js"></script>
+    <script>
+        // Restrict Access
+        const user = DB.getCurrentUser();
+        if(!user || user.role !== 'customer') {
+            window.location.href = 'login.html';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateNav();
+            renderCart();
+        });
+
+        function renderCart() {
+            const cartList = document.getElementById('cartItemsList');
+            const cartElements = DB.getCart();
+            const formatter = new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' });
+
+            if(cartElements.length === 0) {
+                cartList.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--text-muted)">Your cart is currently empty.</div>`;
+                document.getElementById('subTotal').innerText = formatter.format(0);
+                document.getElementById('grandTotal').innerText = formatter.format(0);
+                document.getElementById('checkoutBtn').disabled = true;
+                return;
+            }
+
+            cartList.innerHTML = '';
+            let subtotal = 0;
+
+            cartElements.forEach(item => {
+                const itemTotal = item.product.price * item.quantity;
+                subtotal += itemTotal;
+                
+                cartList.innerHTML += `
+                    <div class="cart-item">
+                        <img src="${item.product.image}" class="cart-img" alt="${item.product.name}">
+                        <div class="cart-details">
+                            <h4 style="font-size:1.1rem; margin-bottom:0.3rem">${item.product.name}</h4>
+                            <div style="color:var(--text-muted); font-size:0.85rem">Category: ${item.product.category}</div>
+                            <div style="color:var(--primary); font-weight:600; margin-top:0.5rem">${formatter.format(item.product.price)}</div>
+                        </div>
+                        <div class="cart-actions">
+                            <span style="background:rgba(255,255,255,0.05); padding:0.4rem 1rem; border-radius:20px; border:1px solid var(--border-color)">
+                                Qty: ${item.quantity}
+                            </span>
+                            <button class="btn btn-outline btn-sm" style="border-color:var(--error); color:var(--error)"
+                            onclick="removeCartItem(${item.product.id})">Remove</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('subTotal').innerText = formatter.format(subtotal);
+            document.getElementById('grandTotal').innerText = formatter.format(subtotal + 500); // with shipping
+            document.getElementById('checkoutBtn').disabled = false;
+        }
+
+        window.removeCartItem = (id) => {
+            DB.removeFromCart(id);
+            renderCart();
+            updateNav(); // update cart count badge
+            showNotification('Item removed');
+        };
+
+        window.processCheckout = () => {
+            if(DB.getCart().length === 0) return;
+            const success = DB.placeOrder(user.username);
+            if(success) {
+                showNotification('Order placed successfully! Redirecting...');
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 2000);
+            }
+        };
+    </script>
+</body>
+</html>

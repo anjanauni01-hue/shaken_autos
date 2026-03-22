@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account - Shaken Autos</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { justify-content: center; align-items: center; }
+        main { display: flex; justify-content: center; align-items: center; width: 100%; padding: 2rem 0; }
+        .back-link {
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: color 0.3s;
+        }
+        .back-link:hover { color: var(--primary); }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-link">← Back to Home</a>
+    <main>
+        <div class="form-container glass" style="width: 100%; max-width: 400px; padding-top: 2rem;">
+            <div class="logo" style="justify-content: center; margin-bottom: 2rem;">🟠 Shaken<span>Autos</span></div>
+            
+            <div class="auth-tabs">
+                <div class="auth-tab active" id="tabLogin">Login</div>
+                <div class="auth-tab" id="tabRegister">Sign Up</div>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="loginEmail" class="form-input" required placeholder="anjana@gmail.com">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" class="form-input" required placeholder="Anjana@0000">
+                </div>
+                <p id="errorMsgLogin" style="color:var(--error); margin-bottom: 1rem; font-size: 0.9rem; text-align: center;" class="hidden">Invalid credentials</p>
+                <button type="submit" class="btn btn-primary" style="width: 100%">Sign In</button>
+            </form>
+
+            <!-- Register Form -->
+            <form id="registerForm" class="hidden">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="regEmail" class="form-input" required placeholder="you@example.com">
+                </div>
+                <div class="form-group">
+                    <label>Mobile Number</label>
+                    <input type="tel" id="regMobile" class="form-input" required placeholder="077xxxxxxx">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="regPassword" class="form-input" required placeholder="Create a password">
+                </div>
+                <p id="errorMsgReg" style="color:var(--error); margin-bottom: 1rem; font-size: 0.9rem; text-align: center;" class="hidden">Account already exists!</p>
+                <button type="submit" class="btn btn-primary" style="width: 100%; background: var(--secondary)">Create Account</button>
+            </form>
+
+            <p style="text-align:center; color:var(--text-muted); margin-top:2rem; font-size: 0.85rem">
+                Test Accounts:<br>
+                Admin: anjana@gmail.com / Anjana@0000<br>
+                Customer: user@gmail.com / 123
+            </p>
+        </div>
+    </main>
+
+    <div id="notification"></div>
+    <script src="data.js"></script>
+    <script>
+        // Tab switching logic
+        const tabLogin = document.getElementById('tabLogin');
+        const tabRegister = document.getElementById('tabRegister');
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+
+        tabLogin.addEventListener('click', () => {
+            tabLogin.classList.add('active');
+            tabRegister.classList.remove('active');
+            loginForm.classList.remove('hidden');
+            registerForm.classList.add('hidden');
+        });
+
+        tabRegister.addEventListener('click', () => {
+            tabRegister.classList.add('active');
+            tabLogin.classList.remove('active');
+            registerForm.classList.remove('hidden');
+            loginForm.classList.add('hidden');
+        });
+
+        // Login Submit
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const u = document.getElementById('loginEmail').value.trim();
+            const p = document.getElementById('loginPassword').value.trim();
+            
+            const user = DB.login(u, p);
+            if(user) {
+                document.getElementById('errorMsgLogin').classList.add('hidden');
+                if(user.role === 'admin') {
+                    window.location.href = 'admin.html';
+                } else {
+                    window.location.href = 'index.html';
+                }
+            } else {
+                document.getElementById('errorMsgLogin').classList.remove('hidden');
+            }
+        });
+
+        // Register Submit
+        registerForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const u = document.getElementById('regEmail').value.trim();
+            const m = document.getElementById('regMobile').value.trim();
+            const p = document.getElementById('regPassword').value.trim();
+            
+            const user = DB.register(u, p, m);
+            if(user) {
+                document.getElementById('errorMsgReg').classList.add('hidden');
+                showNotification("Account created! Logging in...");
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1000);
+            } else {
+                document.getElementById('errorMsgReg').classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

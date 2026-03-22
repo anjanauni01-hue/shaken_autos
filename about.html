@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - Shaken Autos</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .founder-card {
+            display: flex;
+            align-items: center;
+            gap: 2.5rem;
+            padding: 3rem;
+            margin-top: 2rem;
+            border-radius: 20px;
+        }
+        .founder-img {
+            width: 220px;
+            height: 220px;
+            min-width: 220px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid var(--primary);
+            box-shadow: 0 0 25px rgba(249, 115, 22, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 5rem;
+            background: rgba(0,0,0,0.3);
+        }
+        .founder-info h2 { color: var(--primary); font-size: 2.5rem; margin-bottom: 0.5rem; letter-spacing: -1px; }
+        .founder-info h4 { color: var(--text-muted); font-size: 1.1rem; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 2px;}
+        .founder-info p { line-height: 1.8; font-size: 1.15rem; color: var(--text-main); }
+        .highlight { color: var(--primary); font-weight: 600; }
+        @media (max-width: 768px) {
+            .founder-card { flex-direction: column; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">🟠 Shaken<span>Autos</span></div>
+        <nav id="auth-nav"></nav>
+    </header>
+
+    <main>
+        <div class="hero glass" style="padding: 4rem 2rem; text-align: center;">
+            <h1 style="font-size: 3.5rem;">Our Story</h1>
+            <p style="font-size: 1.2rem;">Driven by passion, engineered for perfection.</p>
+        </div>
+
+        <div class="founder-card glass">
+            <!-- Professional Founder Avatar Placeholder -->
+            <div class="founder-img">👨‍💼</div>
+            
+            <div class="founder-info">
+                <h4>Founder & CEO</h4>
+                <h2>Mr. Deshintha Suriyaarachchi</h2>
+                <p>Since <span class="highlight">2024</span>, Shaken Autos has been redefining the standard for premium vehicle spare parts. Founded by Mr. Deshintha Suriyaarachchi with a vision to provide authentic, high-performance auto and bike components, we've grown into a trusted hub for car enthusiasts and riders alike. We believe in quality, durability, and supreme customer satisfaction. Join our journey to make every ride flawless.</p>
+            </div>
+        </div>
+    </main>
+
+    <div id="notification"></div>
+    <script src="data.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            updateNav();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shaken Autos - Premium Spare Parts</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="logo">🟠 Shaken<span>Autos</span></div>
+        <nav id="auth-nav">
+            <!-- Dynamically populated by updateNav() -->
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero glass">
+            <h1>Drive With Perfection</h1>
+            <p>Discover the finest selection of premium car and motorcycle spare parts. High performance guaranteed.</p>
+        </section>
+
+        <section class="filters glass">
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Search for spare parts...">
+            </div>
+            <div class="category-pills" id="categoryTabs">
+                <button class="pill active" data-category="all">All Spares</button>
+                <button class="pill" data-category="car">Car Spares</button>
+                <button class="pill" data-category="bike">Bike Spares</button>
+            </div>
+        </section>
+
+        <section>
+            <div class="products-grid" id="productsGrid">
+                <!-- Products dynamically rendered here -->
+            </div>
+        </section>
+
+        <section id="reviewsSection" class="glass" style="margin-top: 4rem; padding: 2.5rem; border-radius: 20px;">
+            <div class="flex justify-between items-center mb-4 flex-wrap" style="gap:1rem;">
+                <h2 style="color:var(--primary); font-size: 2rem;">Customer Reviews</h2>
+            </div>
+            
+            <div id="reviewFormContainer" class="mb-4" style="background:rgba(0,0,0,0.3); padding:1.5rem; border-radius:12px; border:1px solid var(--border-color); margin-bottom: 2rem;">
+                <!-- populated by JS if user logged in -->
+            </div>
+
+            <div class="products-grid" id="reviewsList" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));">
+                <!-- reviews rendered here -->
+            </div>
+        </section>
+    </main>
+
+    <div id="notification"></div>
+
+    <script src="data.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            updateNav();
+            renderProducts(DB.getProducts());
+
+            // Search Logic
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                const activeCat = document.querySelector('.pill.active').dataset.category;
+                filterProducts(term, activeCat);
+            });
+
+            // Category Logic
+            const pills = document.querySelectorAll('.pill');
+            pills.forEach(pill => {
+                pill.addEventListener('click', () => {
+                    pills.forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    const term = document.getElementById('searchInput').value.toLowerCase();
+                    filterProducts(term, pill.dataset.category);
+                });
+            });
+
+            renderReviewsList();
+            setupReviewForm();
+        });
+
+        function setupReviewForm() {
+            const container = document.getElementById('reviewFormContainer');
+            const user = DB.getCurrentUser();
+            
+            if(!user || user.role !== 'customer') {
+                container.innerHTML = `<p style="color:var(--text-muted); margin:0; text-align:center;"><em>Please <a href="login.html" style="color:var(--primary); text-decoration:underline;">login as a customer</a> to leave a review.</em></p>`;
+                return;
+            }
+
+            container.innerHTML = `
+                <h4 class="mb-4" style="font-size:1.2rem;">Write a Review</h4>
+                <form id="writeReviewForm" style="display:flex; flex-direction:column; gap:1.2rem;">
+                    <div>
+                        <label style="color:var(--text-muted); font-size:0.9rem; margin-bottom:0.5rem; display:block;">Rating</label>
+                        <select id="reviewRating" class="form-input" style="background:var(--bg-color); max-width: 200px;" required>
+                            <option value="5">⭐⭐⭐⭐⭐ (5)</option>
+                            <option value="4">⭐⭐⭐⭐ (4)</option>
+                            <option value="3">⭐⭐⭐ (3)</option>
+                            <option value="2">⭐⭐ (2)</option>
+                            <option value="1">⭐ (1)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="color:var(--text-muted); font-size:0.9rem; margin-bottom:0.5rem; display:block;">Your Review</label>
+                        <textarea id="reviewText" class="form-input" rows="3" required placeholder="Tell us what you think..." style="background:rgba(255,255,255,0.05)"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="align-self:flex-start">Post Review</button>
+                </form>
+            `;
+
+            document.getElementById('writeReviewForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const text = document.getElementById('reviewText').value.trim();
+                const rating = parseInt(document.getElementById('reviewRating').value);
+                DB.addReview(user.username, text, rating);
+                showNotification("Review posted successfully!");
+                e.target.reset();
+                renderReviewsList();
+            });
+        }
+
+        function renderReviewsList() {
+            const list = document.getElementById('reviewsList');
+            const reviews = DB.getReviews();
+            list.innerHTML = '';
+            
+            if(reviews.length === 0) {
+                list.innerHTML = `<p style="color:var(--text-muted); width:100%; grid-column:1/-1; text-align:center;">No reviews yet. Be the first!</p>`;
+                return;
+            }
+
+            // sort newest first
+            reviews.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(r => {
+                const stars = '⭐'.repeat(r.rating) + '☆'.repeat(5-r.rating);
+                const date = new Date(r.date).toLocaleDateString();
+                const nameShort = r.customerId.split('@')[0];
+                list.innerHTML += `
+                    <div class="glass" style="padding:1.5rem; display:flex; flex-direction:column; border-top: 4px solid var(--primary);">
+                        <div class="flex justify-between items-center mb-4">
+                            <span style="font-weight:600; color:var(--text-main); font-size:1.1rem">🧑 ${nameShort}</span>
+                            <span style="color:var(--text-muted); font-size:0.85rem">${date}</span>
+                        </div>
+                        <div style="margin-bottom:1rem; letter-spacing:2px; font-size:0.9rem;">${stars}</div>
+                        <p style="color:var(--text-muted); font-size:0.95rem; line-height:1.6; flex:1;">"${r.text}"</p>
+                    </div>
+                `;
+            });
+        }
+
+        function filterProducts(term, category) {
+            let products = DB.getProducts();
+            if (category !== 'all') {
+                products = products.filter(p => p.category === category);
+            }
+            if (term) {
+                products = products.filter(p => p.name.toLowerCase().includes(term));
+            }
+            renderProducts(products);
+        }
+
+        function renderProducts(products) {
+            const grid = document.getElementById('productsGrid');
+            grid.innerHTML = '';
+            
+            if (products.length === 0) {
+                grid.innerHTML = '<p style="color:var(--text-muted);text-align:center;width:100%;grid-column:1/-1">No products found.</p>';
+                return;
+            }
+
+            products.forEach(p => {
+                const stockIcon = p.inStock
+                    ? `<span class="product-status in-stock"><div class="status-dot"></div> In Stock</span>`
+                    : `<span class="product-status out-of-stock"><div class="status-dot"></div> Out of Stock</span>`;
+                
+                const formatter = new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' });
+                
+                grid.innerHTML += `
+                    <div class="product-card glass">
+                        <img src="${p.image}" class="product-img" alt="${p.name}">
+                        <div class="product-info">
+                            <div class="product-category">${p.category} Spare</div>
+                            <h3 class="product-title">${p.name}</h3>
+                            <div class="product-price">${formatter.format(p.price)}</div>
+                            ${stockIcon}
+                            <button class="btn ${p.inStock ? 'btn-primary' : 'btn-outline'}" 
+                                onclick="handleAddToCart(${p.id}, ${p.inStock})"
+                                ${!p.inStock ? 'disabled' : ''}>
+                                ${p.inStock ? 'Add to Cart' : 'Unavailable'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        window.handleAddToCart = (id, inStock) => {
+            if(!inStock) return;
+            const user = DB.getCurrentUser();
+            if(!user || user.role !== 'customer') {
+                showNotification("Please login as a customer to buy!");
+                setTimeout(() => window.location.href = 'login.html', 1500);
+                return;
+            }
+            
+            if(DB.addToCart(id)) {
+                showNotification("Added to Cart!");
+                updateNav();
+            }
+        }
+    </script>
+</body>
+</html>
